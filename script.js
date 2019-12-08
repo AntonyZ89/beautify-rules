@@ -112,10 +112,12 @@ function converter() {
             _n_str = _n_str.replace(m, m + "'");
 
 
-            str.replace(_str, _n_str);
+            str = str.replace(_str, _n_str);
         }
 
     }
+
+    console.log(str);
 
 
     /*if ($("#tipo").val() == 0) {
