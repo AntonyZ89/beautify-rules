@@ -48,9 +48,15 @@ function arrumarMultiplo(array) {
             .slice(1, _array.length)
             .map(v => {
 
+                console.log('v', v);
+
                 if (/.+ => \d+/.test(v)) {
-                    let m = v.match(/(.+) => .+/)[1];
+                    let m = v.match(/(.+) => \d+/)[1];
                     return v.replace(m, `\'${m}\'`);
+                } else if (/.+ => .+/.test(v)) {
+                    let [, m1, m2] = v.match(/(.+) => (.+)/);
+                    v = v.replace(m1, `\'${m1}\'`);
+                    v = v.replace(m2, `\'${m2}\'`);
                 }
 
                 return `'${v}'`;
@@ -64,21 +70,6 @@ function arrumarMultiplo(array) {
     }
 
     return resultado;
-}
-
-function _() {
-    `[['accredited', 'courtyards'], 'string', 'max' => 255]`.split(', ').map((v) => {
-        if (/(['"]).+\1 => .+/.test(v)) {
-
-            let m = temp1.match(/(['"]).+\1/)[0];
-            v = v.replace(m, m.slice(0, -1));
-            m = temp2.match(/=> .+\b/)[0];
-            v = v.replace(m, m + "'");
-            return v;
-
-        }
-        return v;
-    }).join(', ')
 }
 
 function converter() {
@@ -97,8 +88,9 @@ function converter() {
                 index = i;
             }
         } else if (v === ']') {
-            if (_) _--;
-            else {
+            if (_) {
+                _--;
+            } else {
                 groups.push([index, i]);
                 found = false;
             }
@@ -134,8 +126,6 @@ function converter() {
                     } else {
                         p = true;
                     }
-
-
                 }
             }
 
