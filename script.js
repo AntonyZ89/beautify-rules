@@ -112,23 +112,24 @@ function converter() {
                 pushSubstring(index, i, virgulas, _str);
                 index = i + 1;
             } else if (i === _str.length - 1) {
-                pushSubstring(index, _str.length - 1, virgulas, _str);
+                pushSubstring(index, _str.length, virgulas, _str);
             }
         }
 
         virgulas.forEach((v, i) => {
-            _n_str = v;
             if (/=>/.test(v)) {
-                console.log('v', v);
+                _n_str = v;
+                console.log('antes', v);
                 let match = v.match(/((['"]).+\2) =>/)[1];
-                v = v.replace(match, match.slice(0, -1))+ '\'';
+                v = v.replace(match, match.slice(0, -1)) + '\'';
 
                 v = v.replace(/(['"])/g, '\\$1');
 
                 let split = v.split('');
                 split.splice(v.indexOf('\\'), 1);
-                // split.splice(v.lastIndexOf('\\') - 1, 1);
+                split.splice(v.lastIndexOf('\\') - 1, 1);
                 v = split.join('');
+                console.log('depois', v);
                 str = str.replace(_n_str, v);
             }
         });
@@ -171,6 +172,7 @@ function converter() {
     /*if ($("#tipo").val() == 0) {
       $("#convertido").val(arrumarUnico(eval(str)));
     } else {*/
+    console.log(`[${str}]`)
     $("#convertido").val(arrumarMultiplo(eval(`[${str}]`)));
     // }
 }
