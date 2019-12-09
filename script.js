@@ -69,30 +69,26 @@ function arrumarMultiplo(array) {
     return resultado;
 }
 
-function pushSubstring(start, final, array, str) {
-    array.push(str.substring(start, final));
-}
-
 function converter() {
     let str = $("#converter").val();
     if (str.endsWith(",")) str = str.slice(0, -1);
     str = str.trim().replace(/\s+/g, ' ').split('');
 
-    let bracketGroups = [], found = false, index = 0, nestedBrackets = 0;
+    let bracketGroups = [], found = false, index = 0, nestedBracket = 0;
 
     for (let [i, v] of str.entries()) {
         if (v === '[') {
             if (found) {
-                nestedBrackets++;
+                nestedBracket++;
             } else {
                 found = true;
                 index = i;
             }
         } else if (v === ']') {
-            if (nestedBrackets) {
-                nestedBrackets--;
+            if (nestedBracket) {
+                nestedBracket--;
             } else {
-                pushSubstring(index, i, bracketGroups, str);
+                bracketGroups.push([index, i]);
                 found = false;
             }
         }
@@ -100,43 +96,23 @@ function converter() {
 
     str = str.join('');
 
-    for (let _str of bracketGroups) {
-        let _n_str;
+    for (let [start, final] of bracketGroups) {
+        let _str = str.substring(start, final + 1);
+        let _n_str = 0;
 
-        let virgulas = [], index = 1, parentheses = 0, brackets = -1;
 
-        for (let [i, v] of _str.split('').entries()) {
-            (v === '(' && parentheses++) || (v === '[' && brackets++);
-            (v === ')' && parentheses--) || (v === ']' && brackets--);
-
-            if (v === ',' && !parentheses && !brackets) {
-                pushSubstring(index, i, virgulas, _str);
-                index = i + 1;
-            } else if (i === _str.length - 1) {
-                pushSubstring(index, _str.length - 1, virgulas, _str);
-            }
-        }
-
-        virgulas.forEach((v, i) => {
-            if (/=>/.test(v)) {
-                v = v.replace(/(['"])/g, '\\$1');
-                let match = v.match(/((['"]).+\2) =>/)[1];
-
-                v = v.replace(match, match.slice(0, -1))+ '\'';
-                str.replace(_str, v);
-            }
-        });
-
-        /*
         if (/(['"]).+\1 => \d+/.test(_str)) {
             _n_str = _str;
             let m = _n_str.match(/(['"]).+\1/)[0];
             _n_str = _str.replace(m, m.slice(0, -1));
             m = _n_str.match(/=> \d+\b/)[0];
             _n_str = _n_str.replace(m, `${m}'`);
+
+
             str = str.replace(_str, _n_str);
         } else if (/(['"]).+\1 => (['"]).+\2/.test(_str)) {
             _n_str = _str.split('').reverse();
+
             let p = false;
             let qnt = 2;
             for (let [i, v] of _n_str.entries()) {
@@ -149,13 +125,12 @@ function converter() {
                     }
                 }
             }
+
             _n_str = _n_str.reverse().join('');
+
             str = str.replace(_str, _n_str);
         }
-        */
-
     }
-
 
     /*if ($("#tipo").val() == 0) {
       $("#convertido").val(arrumarUnico(eval(str)));
