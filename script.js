@@ -47,6 +47,7 @@ function arrumarMultiplo(array) {
         let args = _array
             .slice(1, _array.length)
             .map(v => {
+                return v;
                 if (/.+ => \d+/.test(v)) {
                     let m = v.match(/(.+) => \d+/)[1];
                     return v.replace(m, `\'${m}\'`);
@@ -76,11 +77,11 @@ function pushSubstring(start, final, array, str) {
 function converter() {
     let str = $("#converter").val();
     if (str.endsWith(",")) str = str.slice(0, -1);
-    str = str.trim().replace(/\s+/g, ' ').split('');
+    str = str.trim().replace(/\s+/g, ' ');
 
     let bracketGroups = [], found = false, index = 0, nestedBrackets = 0;
 
-    for (let [i, v] of str.entries()) {
+    for (let [i, v] of str.split('').entries()) {
         if (v === '[') {
             if (found) {
                 nestedBrackets++;
@@ -97,8 +98,6 @@ function converter() {
             }
         }
     }
-
-    str = str.join('');
 
     for (let _str of bracketGroups) {
         let _n_str;
@@ -118,12 +117,19 @@ function converter() {
         }
 
         virgulas.forEach((v, i) => {
+            _n_str = v;
             if (/=>/.test(v)) {
-                v = v.replace(/(['"])/g, '\\$1');
+                console.log('v', v);
                 let match = v.match(/((['"]).+\2) =>/)[1];
-
                 v = v.replace(match, match.slice(0, -1))+ '\'';
-                str.replace(_str, v);
+
+                v = v.replace(/(['"])/g, '\\$1');
+
+                let split = v.split('');
+                split.splice(v.indexOf('\\'), 1);
+                // split.splice(v.lastIndexOf('\\') - 1, 1);
+                v = split.join('');
+                str = str.replace(_n_str, v);
             }
         });
 
