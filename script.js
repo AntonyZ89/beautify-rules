@@ -47,14 +47,13 @@ function arrumarMultiplo(array) {
         let args = _array
             .slice(1, _array.length)
             .map(v => {
-                return v;
                 if (/.+ => \d+/.test(v)) {
                     let m = v.match(/(.+) => \d+/)[1];
                     return v.replace(m, `\'${m}\'`);
                 } else if (/.+ => .+/.test(v)) {
                     let [, m1, m2] = v.match(/(.+) => (.+)/);
-                    v = v.replace(m1, `${m1}\'`);
-                    v = v.replace(m2, `\'${m2}`);
+                    v = v.replace(m1, `\'${m1}\'`);
+                    v = v.replace(m2, `\'${m2}\'`);
                 }
 
                 return `'${v}'`;
@@ -70,71 +69,38 @@ function arrumarMultiplo(array) {
     return resultado;
 }
 
-function pushSubstring(start, final, array, str) {
-    array.push(str.substring(start, final));
-}
-
 function converter() {
     let str = $("#converter").val();
     if (str.endsWith(",")) str = str.slice(0, -1);
-    str = str.trim().replace(/\s+/g, ' ');
+    str = str.trim().replace(/\s+/g, ' ').split('');
 
-    let bracketGroups = [], found = false, index = 0, nestedBrackets = 0;
+    let groups = [], found = false, index = 0, _ = 0;
 
-    for (let [i, v] of str.split('').entries()) {
+    for (let [i, v] of str.entries()) {
         if (v === '[') {
             if (found) {
-                nestedBrackets++;
+                _++;
             } else {
                 found = true;
                 index = i;
             }
         } else if (v === ']') {
-            if (nestedBrackets) {
-                nestedBrackets--;
+            if (_) {
+                _--;
             } else {
-                pushSubstring(index, i, bracketGroups, str);
+                groups.push([index, i]);
                 found = false;
             }
         }
     }
 
-    for (let _str of bracketGroups) {
-        let _n_str;
+    str = str.join('');
 
-        let virgulas = [], index = 1, parentheses = 0, brackets = -1;
+    for (let [start, final] of groups) {
+        let _str = str.substring(start, final + 1);
+        let _n_str = 0;
 
-        for (let [i, v] of _str.split('').entries()) {
-            (v === '(' && parentheses++) || (v === '[' && brackets++);
-            (v === ')' && parentheses--) || (v === ']' && brackets--);
 
-            if (v === ',' && !parentheses && !brackets) {
-                pushSubstring(index, i, virgulas, _str);
-                index = i + 1;
-            } else if (i === _str.length - 1) {
-                pushSubstring(index, _str.length, virgulas, _str);
-            }
-        }
-
-        virgulas.forEach((v, i) => {
-            if (/=>/.test(v)) {
-                _n_str = v;
-                console.log('antes', v);
-                let match = v.match(/((['"]).+\2) =>/)[1];
-                v = v.replace(match, match.slice(0, -1)) + '\'';
-
-                v = v.replace(/(['"])/g, '\\$1');
-
-                let split = v.split('');
-                split.splice(v.indexOf('\\'), 1);
-                split.splice(v.lastIndexOf('\\') - 1, 1);
-                v = split.join('');
-                console.log('depois', v);
-                str = str.replace(_n_str, v);
-            }
-        });
-
-        /*
         if (/(['"]).+\1 => \d+/.test(_str)) {
             _n_str = _str;
             let m = _n_str.match(/(['"]).+\1/)[0];
@@ -164,7 +130,6 @@ function converter() {
 
             str = str.replace(_str, _n_str);
         }
-        */
 
     }
 
@@ -172,7 +137,6 @@ function converter() {
     /*if ($("#tipo").val() == 0) {
       $("#convertido").val(arrumarUnico(eval(str)));
     } else {*/
-    console.log(`[${str}]`)
     $("#convertido").val(arrumarMultiplo(eval(`[${str}]`)));
     // }
 }
