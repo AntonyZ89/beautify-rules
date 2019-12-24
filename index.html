@@ -5,34 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Structure Rules</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css" rel="stylesheet">
 
     <style>
         body {
             padding: 10px;
         }
+
+        #converter, #convertido {
+            font-size: 12px;
+            height: 40vh;
+        }
+
+        .info {
+            cursor: pointer;
+            font-size: 25px;
+        }
     </style>
 </head>
 
 <body class="fluid-container">
-    <div class="form-group">
-        <textarea class="form-control" id="converter" rows=6 cols=60></textarea>
-    </div>
+<div class="form-group">
+    <label for="converter">
+        <b>Rules</b> <i class="fas fa-question-circle info"></i>
+    </label>
+    <textarea class="form-control" id="converter" rows=6 cols=60></textarea>
+</div>
+<div class="form-group">
+    <label for="convertido">
+        <b>Result</b>
+    </label>
     <div class="form-group">
         <label>
-            Resultado:
-<!--            <select class="form-control" id="tipo">-->
-<!--                <option value=0>Array único</option>wahdbawd-->
-<!--                <option value=1>Múltiplos Arrays</option>-->
-<!--            </select>-->
+            Put <b>created_at</b> and <b>updated_at</b> in the end
+            <input type="checkbox" id="at">
+        </label>
+        <br>
+        <label>
+            Attributes with bracket
+            <input type="checkbox" id="withBracket">
         </label>
     </div>
-    <div class="form-group">
-        <textarea class="form-control" id="convertido" rows=12 cols=60></textarea>
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="script.js"></script>
+    <textarea class="form-control" id="convertido" rows=12 cols=60></textarea>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="script.js"></script>
 </body>
 
 </html>

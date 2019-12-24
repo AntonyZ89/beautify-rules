@@ -1,159 +1,181 @@
-function arrumarUnico(array) {
-    let s = "";
-    let props = [];
+let converterElement = $('#converter');
+let convertidoElement = $('#convertido');
+let atElement = $('#at');
+let withBracketElement = $('#withBracket');
 
-    let args = array
-        .splice(1, array.length)
-        .map((v, i) => `'${v}'`)
-        .join(", ");
+function unique(str) {
+    str = unbracket(str);
 
-    for (let _a of array[0]) {
-        props.push(_a);
+    if (!str.startsWith('[')) {
+        let r = str.split(',')[0];
+        str = str.replace(r, `[${r}]`);
     }
 
-    props.sort();
+    let v = splitBrackets(str)[0];
+    let properties = str.replace(v + ', ', '');
 
-    let comentados = [];
-
-    for (let p of props) {
-        if (comentados.indexOf(`${p}`) === -1) {
-            s += `\t\t\t//${p}\n`;
-            comentados.push(p);
-        }
-        s += `['${p}', ${args}],\n`;
-    }
-
-    s = bubbleSort(`[${s}]`);
-
-    return s.substring(1, s.length - 1);
+    return eval(v).map(v => `[['${v}'], ${properties}]`).join(',\n');
 }
 
-function arrumarMultiplo(array) {
-    let s = "";
-    let resultado = "";
+function convert() {
+    let hasBracket = false;
 
-    for (let _a of array) {
-        s += arrumarUnico(_a);
+    let val = converterElement.val().replace(/[\t\n]/g, '').trim();
+    if (splitBrackets(val).length === 1) {
+        val = unbracket(val);
+        hasBracket = true;
     }
 
-    s = s.slice(0, -1);
+    let sorted = bubbleSort(
+        splitBrackets(val)
+            .map((v) => unique(v))
+            .join(',\n'), atElement.is(':checked')
+    );
+    let commented = comment(sorted).replace(/(\/\/.+),/g, '$1');
 
-    s = bubbleSort(eval(`[${s}]`));
+    if (!withBracketElement.is(':checked')) {
+        commented = commented
+            .split('\n')
+            .map((v, i) => {
+                if (v.startsWith('\t\t//')) return v;
 
-    let comentados = [];
-
-    for (let _array of s) {
-        let atributo = _array[0];
-        let args = _array
-            .slice(1, _array.length)
-            .map(v => {
-                if (/.+ => \d+/.test(v)) {
-                    let m = v.match(/(.+) => \d+/)[1];
-                    return v.replace(m, `\'${m}\'`);
-                } else if (/.+ => .+/.test(v)) {
-                    let [, m1, m2] = v.match(/(.+) => (.+)/);
-                    v = v.replace(m1, `${m1}\'`);
-                    v = v.replace(m2, `\'${m2}`);
-                }
-
-                return `'${v}'`;
-            })
-            .join(", ");
-        if (comentados.indexOf(`${atributo}`) === -1) {
-            resultado += `\t\t\t//${atributo}\n`;
-            comentados.push(atributo);
-        }
-        resultado += `['${atributo}', ${args}],\n`;
+                let r = v.match(/\[(.+)]/)[1];
+                let _r = r.split(',')[0];
+                return v.replace(r, r.replace(_r, unbracket(_r)));
+            }).join('\n');
     }
 
-    return resultado;
+    if (hasBracket) commented = `[\n${commented}\n]`;
+
+    convertidoElement.val(commented);
 }
 
-function converter() {
-    let str = $("#converter").val();
-    if (str.endsWith(",")) str = str.slice(0, -1);
-    str = str.trim().replace(/\s+/g, ' ').split('');
+converterElement.keyup(convert);
+atElement.change(convert);
+withBracketElement.change(convert);
 
-    let bracketGroups = [], found = false, index = 0, nestedBracket = 0;
-
-    for (let [i, v] of str.entries()) {
-        if (v === '[') {
-            if (found) {
-                nestedBracket++;
-            } else {
-                found = true;
-                index = i;
-            }
-        } else if (v === ']') {
-            if (nestedBracket) {
-                nestedBracket--;
-            } else {
-                bracketGroups.push([index, i]);
-                found = false;
-            }
-        }
-    }
-
-    str = str.join('');
-
-    for (let [start, final] of bracketGroups) {
-        let _str = str.substring(start, final + 1);
-        let _n_str = 0;
-
-
-        if (/(['"]).+\1 => \d+/.test(_str)) {
-            _n_str = _str;
-            let m = _n_str.match(/(['"]).+\1/)[0];
-            _n_str = _str.replace(m, m.slice(0, -1));
-            m = _n_str.match(/=> \d+\b/)[0];
-            _n_str = _n_str.replace(m, `${m}'`);
-
-
-            str = str.replace(_str, _n_str);
-        } else if (/(['"]).+\1 => (['"]).+\2/.test(_str)) {
-            _n_str = _str.split('').reverse();
-
-            let p = false;
-            let qnt = 2;
-            for (let [i, v] of _n_str.entries()) {
-                if ([`'`, `"`].indexOf(v) !== -1) {
-                    if (p && qnt) {
-                        delete _n_str[i];
-                        qnt--;
-                    } else {
-                        p = true;
-                    }
-                }
-            }
-
-            _n_str = _n_str.reverse().join('');
-
-            str = str.replace(_str, _n_str);
-        }
-    }
-
-    /*if ($("#tipo").val() == 0) {
-      $("#convertido").val(arrumarUnico(eval(str)));
-    } else {*/
-    $("#convertido").val(arrumarMultiplo(eval(`[${str}]`)));
-    // }
-}
-
-$("#converter").keyup(converter);
-
-// $("#tipo").change(converter);
-
-function bubbleSort(array) {
-    let len = array.length;
+function bubbleSort(str, CreatedAtAndUpdatedAt) {
+    str = str.split(',\n');
+    let len = str.length;
     for (let i = 0; i < len; i++) {
         for (let j = 0; j < len - 1; j++) {
-            if (array[j][0] > array[j + 1][0]) {
-                [array[j], array[j + 1]] = [array[j + 1], array[j]];
-                // let tmp = array[j];
-                // array[j] = array[j + 1];
-                // array[j + 1] = tmp;
-            }
+            let str1 = getMainAttribute(str[j]);
+            let str2 = getMainAttribute(str[j + 1]);
+
+            (str1 > str2) && ([str[j], str[j + 1]] = [str[j + 1], str[j]]);
         }
     }
-    return array;
+
+    let createdAtIndex = null, updatedAtIndex = null;
+
+    str.forEach((v, i) => {
+        if (createdAtIndex !== null && updatedAtIndex !== null) return;
+
+        v = getMainAttribute(v);
+        if (CreatedAtAndUpdatedAt && createdAtIndex === null && v === "'created_at'")
+            createdAtIndex = i;
+        else if (CreatedAtAndUpdatedAt && updatedAtIndex === null && v === "'updated_at'")
+            updatedAtIndex = i;
+    });
+
+    let createdAt, updatedAt;
+
+    function removeCreatedAt() {
+        createdAt = str.splice(createdAtIndex, 1)[0];
+    }
+
+    function removeUpdatedAt() {
+        updatedAt = str.splice(updatedAtIndex, 1)[0];
+    }
+
+    if (createdAtIndex !== null) {
+        if (createdAtIndex > updatedAtIndex) {
+            removeCreatedAt();
+            removeUpdatedAt();
+        } else {
+            removeUpdatedAt();
+            removeCreatedAt();
+        }
+
+        str.push(createdAt);
+        str.push(updatedAt);
+    } else if (updatedAtIndex !== null) {
+        if (createdAtIndex > updatedAtIndex) {
+            removeCreatedAt();
+            removeUpdatedAt();
+        } else {
+            removeUpdatedAt();
+            removeCreatedAt();
+        }
+
+        str.push(createdAt);
+        str.push(updatedAt);
+    }
+
+    return str.join(',\n');
 }
+
+function comment(str) {
+    str = str.split(',\n');
+
+    let values = {};
+
+    str.forEach((attribute, i) => {
+        attribute = getMainAttribute(attribute);
+        if (values[attribute] === undefined) {
+            values[attribute] = i;
+        }
+    });
+
+    for (let attribute of Object.keys(values).reverse()) {
+        str.splice(values[attribute], 0, `\t\t//${unquote(attribute)}`);
+    }
+
+    return str.join(',\n');
+}
+
+function unbracket(str) {
+    return str.slice(1, -1);
+}
+
+function unquote(str) {
+    return unbracket(str);
+}
+
+function getMainAttribute(str) {
+    /**
+     * 1 - [['example'], 'integer']
+     * 2 - ['example'], 'integer'
+     * 3 - ['example']
+     * 4 - 'example'
+     *         4           3           2      1 */
+    return unbracket(splitBrackets(unbracket(str))[0])
+}
+
+function splitBrackets(str) {
+    let strSplit = str.split('');
+
+    let brackets = [], bracketIndex = -1, inside = 0;
+
+    strSplit.forEach((v, i) => {
+        if (v === '[')
+            bracketIndex === -1 ? (bracketIndex = i) : inside++;
+        else if (v === ']' && !inside--) {
+            brackets.push(str.substring(bracketIndex, i + 1));
+            (bracketIndex = -1) && (inside = 0);
+        }
+    });
+
+    return brackets;
+}
+
+setTimeout(() => {
+    converterElement.val(`[
+    [['example', 'yii', 'created_at', 'updated_at'], 'integer'],
+    [['yii', 'good_structure'], 'required'],
+    ['creation_date', 'date'],
+    [['name', 'description'], 'string', 'max' => 255]
+]`);
+
+    convert();
+}, 100);
