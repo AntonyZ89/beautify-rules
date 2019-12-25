@@ -1,7 +1,8 @@
-let converterElement = $('#converter');
-let convertidoElement = $('#convertido');
-let atElement = $('#at');
-let withBracketElement = $('#withBracket');
+const converterElement = $('#converter');
+const convertidoElement = $('#convertido');
+const atElement = $('#at');
+const withBracketElement = $('#withBracket');
+const errorElement = $('.error');
 
 function unique(str) {
     str = unbracket(str);
@@ -12,15 +13,44 @@ function unique(str) {
     }
 
     let v = splitBrackets(str)[0];
-    let properties = str.replace(v + ', ', '');
+    let properties = str.replace(v, '');
 
-    return eval(v).map(v => `[['${v}'], ${properties}]`).join(',\n');
+    return eval(v)
+        .map(v => `[['${v}']${properties}]`)
+        .join(',\n');
 }
 
-function convert() {
+async function convert() {
+    let val = converterElement
+        .val()
+        .replace(/[\t\n]/g, '')
+        .trim()
+        .replace(/\s+/g, ' ');
+
+    let response = await fetch('https://phpcodechecker.com/api', {
+        method: 'POST',
+        body: JSON.stringify({code: converterElement.val()}),
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+    }).then(response => response.json());
+
+    //{"errors":"TRUE","syntax":{"message":"Parse error: syntax error, unexpected ']' in your code on line 6","code":"]"}}
+    console.log(response);
+    if(response.errors === 'TRUE') {
+        errorElement.addClass('is-invalid');
+        errorElement.removeClass('is-invalid');
+        errorElement.text(response.syntax.message + '\n\ncode: ' + response.syntax.code);
+        return;
+    } else {
+        errorElement.removeClass('is-invalid');
+        errorElement.addClass('is-invalid');
+        errorElement.empty();
+    }
+
     let hasBracket = false;
 
-    let val = converterElement.val().replace(/[\t\n]/g, '').trim();
     if (splitBrackets(val).length === 1) {
         val = unbracket(val);
         hasBracket = true;
