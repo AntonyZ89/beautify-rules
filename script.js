@@ -2,7 +2,7 @@ const converterElement = $('#converter');
 const convertidoElement = $('#convertido');
 const atElement = $('#at');
 const withBracketElement = $('#withBracket');
-const errorElement = $('.error');
+// const errorElement = $('.error');
 
 function unique(str) {
     str = unbracket(str);
@@ -27,27 +27,23 @@ async function convert() {
         .trim()
         .replace(/\s+/g, ' ');
 
-    let response = await fetch('https://phpcodechecker.com/api', {
-        method: 'POST',
-        body: JSON.stringify({code: converterElement.val()}),
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-        },
-    }).then(response => response.json());
+    /*
+    let response = await  fetch('https://phpcodechecker.com/api?code=' + converterElement.val())
+        .then(response => response.json());
 
     //{"errors":"TRUE","syntax":{"message":"Parse error: syntax error, unexpected ']' in your code on line 6","code":"]"}}
     console.log(response);
-    if(response.errors === 'TRUE') {
+    if (response.errors === 'TRUE') {
         errorElement.addClass('is-invalid');
-        errorElement.removeClass('is-invalid');
-        errorElement.text(response.syntax.message + '\n\ncode: ' + response.syntax.code);
+        errorElement.removeClass('is-valid');
+        errorElement.text(response.syntax.message.replace(/in your code on line \d+/, ''));
         return;
     } else {
+        errorElement.addClass('is-valid');
         errorElement.removeClass('is-invalid');
-        errorElement.addClass('is-invalid');
         errorElement.empty();
     }
+     */
 
     let hasBracket = false;
 
@@ -58,11 +54,12 @@ async function convert() {
 
     let sorted = bubbleSort(
         splitBrackets(val)
-            .map((v) => unique(v))
+            .map(unique)
             .join(',\n'), atElement.is(':checked')
     );
     let commented = comment(sorted).replace(/(\/\/.+),/g, '$1');
 
+    /** Remove Brackets from Attribute */
     if (!withBracketElement.is(':checked')) {
         commented = commented
             .split('\n')
@@ -96,29 +93,31 @@ function bubbleSort(str, CreatedAtAndUpdatedAt) {
         }
     }
 
-    let createdAtIndex = null, updatedAtIndex = null;
+    let createdAtIndex = -1, updatedAtIndex = -1;
 
     str.forEach((v, i) => {
-        if (createdAtIndex !== null && updatedAtIndex !== null) return;
+        if (createdAtIndex !== -1 && updatedAtIndex !== -1) return;
 
         v = getMainAttribute(v);
-        if (CreatedAtAndUpdatedAt && createdAtIndex === null && v === "'created_at'")
+        if (CreatedAtAndUpdatedAt && createdAtIndex === -1 && v === "'created_at'")
             createdAtIndex = i;
-        else if (CreatedAtAndUpdatedAt && updatedAtIndex === null && v === "'updated_at'")
+        else if (CreatedAtAndUpdatedAt && updatedAtIndex === -1 && v === "'updated_at'")
             updatedAtIndex = i;
     });
 
     let createdAt, updatedAt;
 
     function removeCreatedAt() {
-        createdAt = str.splice(createdAtIndex, 1)[0];
+        if (createdAtIndex !== -1)
+            createdAt = str.splice(createdAtIndex, 1)[0];
     }
 
     function removeUpdatedAt() {
-        updatedAt = str.splice(updatedAtIndex, 1)[0];
+        if (updatedAtIndex !== -1)
+            updatedAt = str.splice(updatedAtIndex, 1)[0];
     }
 
-    if (createdAtIndex !== null) {
+    if (createdAtIndex !== -1) {
         if (createdAtIndex > updatedAtIndex) {
             removeCreatedAt();
             removeUpdatedAt();
@@ -127,9 +126,9 @@ function bubbleSort(str, CreatedAtAndUpdatedAt) {
             removeCreatedAt();
         }
 
-        str.push(createdAt);
-        str.push(updatedAt);
-    } else if (updatedAtIndex !== null) {
+        createdAt && str.push(createdAt);
+        updatedAt && str.push(updatedAt);
+    } else if (updatedAtIndex !== -1) {
         if (createdAtIndex > updatedAtIndex) {
             removeCreatedAt();
             removeUpdatedAt();
@@ -138,8 +137,8 @@ function bubbleSort(str, CreatedAtAndUpdatedAt) {
             removeCreatedAt();
         }
 
-        str.push(createdAt);
-        str.push(updatedAt);
+        createdAt && str.push(createdAt);
+        updatedAt && str.push(updatedAt);
     }
 
     return str.join(',\n');
@@ -152,14 +151,11 @@ function comment(str) {
 
     str.forEach((attribute, i) => {
         attribute = getMainAttribute(attribute);
-        if (values[attribute] === undefined) {
-            values[attribute] = i;
-        }
+        (values[attribute] === undefined) && (values[attribute] = i);
     });
 
-    for (let attribute of Object.keys(values).reverse()) {
+    for (let attribute of Object.keys(values).reverse())
         str.splice(values[attribute], 0, `\t\t//${unquote(attribute)}`);
-    }
 
     return str.join(',\n');
 }
