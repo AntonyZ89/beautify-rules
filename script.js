@@ -20,11 +20,13 @@ function unique(str) {
         .join(',\n');
 }
 
-async function convert() {
+function convert() {
     let val = converterElement
         .val()
         .replace(/[\t\n]/g, '')
         .trim()
+        .replace(/(?:\s+)?([)\]])(?:\s+)?/g, '$1')
+        .replace(/(?:\s+)?([(\[])(?:\s+)?/g, '$1')
         .replace(/\s+/g, ' ');
 
     /*
